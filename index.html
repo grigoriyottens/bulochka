@@ -3,10 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffe1e6">
 <title>Романтический воркшоп для сладкой булочки 🥐💕</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><text x='50' y='53' font-size='82' text-anchor='middle' dominant-baseline='central'>🥐</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Comfortaa:wght@500;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Cal.com embed loader -->
+<script>
+(function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; } p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
+Cal("init", { origin: "https://cal.com" });
+Cal("ui", { theme: "light", hideEventTypeDetails: false, layout: "month_view", cssVarsPerTheme: { light: { "cal-brand": "#ff5a7a" } } });
+Cal("on", { action: "bookingSuccessful", callback: function(){ if (window.onCalBooked) window.onCalBooked(); } });
+</script>
+
 <style>
   :root{
     --cream:#fff7f0; --blush:#ffe1e6; --rose:#ff5a7a; --rose-deep:#e8456a;
@@ -111,29 +122,15 @@
   textarea#otherText:focus{outline:none;border-color:var(--rose)}
   .hidden{display:none}
 
-  /* calendar */
-  .cal{background:#fff;border:1px solid var(--line);border-radius:22px;padding:18px;margin-top:18px}
-  .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-  .cal-head b{font-family:'Comfortaa',cursive;font-size:17px}
-  .nav-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:#fff;
-    cursor:pointer;font-size:16px;color:var(--rose);transition:.15s;font-weight:800}
-  .nav-btn:hover:not(:disabled){background:#fff1f3;border-color:#ffb3c0}
-  .nav-btn:disabled{opacity:.3;cursor:not-allowed}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-  .wd{font-size:11px;color:var(--ink-soft);text-align:center;font-weight:800;padding-bottom:4px}
-  .day{aspect-ratio:1;border:none;background:#fff4f1;border-radius:12px;cursor:pointer;
-    font-family:'Nunito';font-weight:700;font-size:15px;color:var(--ink);transition:.15s}
-  .day:hover:not(:disabled){background:#ffe0e6;transform:scale(1.06)}
-  .day:disabled{opacity:.28;cursor:not-allowed}
-  .day.empty{background:transparent;cursor:default}
-  .day.sel{background:linear-gradient(135deg,var(--rose),var(--coral));color:#fff;
-    box-shadow:0 8px 16px -8px rgba(255,90,122,.8)}
-  .slots-label{text-align:center;color:var(--ink-soft);font-weight:700;margin:20px 0 0;font-size:14px}
-  .slots{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:center}
-  .slot{padding:11px 20px;border-radius:999px;border:2px solid var(--line);background:#fff;
-    cursor:pointer;font-family:'Nunito';font-weight:800;font-size:15px;color:var(--ink);transition:.15s}
-  .slot:hover{border-color:#ffb3c0}
-  .slot.sel{border-color:var(--rose);background:#fff1f3;color:var(--rose-deep)}
+  /* booking (Cal.com) */
+  .cal-note{display:flex;flex-wrap:wrap;gap:9px 20px;background:linear-gradient(135deg,#fff,#fff1f3);
+    border:1px solid var(--line);border-radius:18px;padding:15px 18px;margin:4px 0 14px;font-size:15px}
+  .cal-note span{display:inline-flex;align-items:center;gap:7px;font-weight:600}
+  .cal-note b{color:var(--rose-deep)}
+  #cal-inline{width:100%;height:min(660px,78vh);overflow:auto;border-radius:18px;
+    border:1px solid var(--line);background:#fff}
+  .cal-loading{display:grid;place-items:center;height:100%;color:var(--ink-soft);
+    font-family:'Caveat',cursive;font-size:24px}
 
   /* ticket */
   .ticket{background:#fff;border-radius:24px;padding:0;overflow:hidden;
@@ -148,6 +145,7 @@
   .tk-row .lab{width:120px;flex:0 0 auto;color:var(--ink-soft);font-weight:700;font-size:14px}
   .tk-row .val{font-weight:800;font-size:15px}
   .tk-row .val ul{margin:4px 0 0;padding-left:18px;font-weight:600}
+  .tk-row .val small{color:var(--ink-soft);font-weight:600}
   .zoom-badge{display:inline-flex;align-items:center;gap:8px;background:#eafced;color:#1f9d55;
     border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px;margin-top:4px}
   .zoom-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.2);
@@ -233,28 +231,24 @@
       <div class="options grid-2" id="cuisineGrid"></div>
       <div class="row">
         <button class="back" onclick="goto('problems')">← назад</button>
-        <button class="btn btn-primary" id="cuisineNext" disabled onclick="goto('time')">Дальше →</button>
+        <button class="btn btn-primary" id="cuisineNext" disabled onclick="goto('booking')">Дальше →</button>
       </div>
     </section>
 
-    <!-- ВРЕМЯ -->
-    <section class="step" data-step="time">
+    <!-- ЗАПИСЬ (Cal.com) -->
+    <section class="step" data-step="booking">
       <p class="kicker">шаг 3 · когда</p>
-      <h2 class="title">Когда тебе удобно?</h2>
-      <p class="lead">Только суббота и воскресенье. Время любое — но не позже 19:00.</p>
-      <div class="cal">
-        <div class="cal-head">
-          <button class="nav-btn" id="prevMonth">‹</button>
-          <b id="calLabel"></b>
-          <button class="nav-btn" id="nextMonth">›</button>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
+      <h2 class="title">Выбери удобное время</h2>
+      <div class="cal-note">
+        <span>🗓️ только <b>суббота&nbsp;и&nbsp;воскресенье</b></span>
+        <span>🕐 с <b>13:00 до 19:00</b> по Москве</span>
+        <span>⏱️ 60 минут · 💻 Zoom</span>
       </div>
-      <p class="slots-label">Во сколько встречаемся?</p>
-      <div class="slots" id="slots"></div>
+      <p class="lead">Виджет покажет только свободные слоты — выбери день и время и подтверди прямо здесь 💕</p>
+      <div id="cal-inline"><div class="cal-loading">загружаю календарь… 🥐</div></div>
       <div class="row">
         <button class="back" onclick="goto('cuisine')">← назад</button>
-        <button class="btn btn-primary" id="timeConfirm" disabled onclick="goto('done')">Готово 💕</button>
+        <button class="btn btn-primary" onclick="goto('done')">Я записалась 💕</button>
       </div>
     </section>
 
@@ -269,10 +263,10 @@
         </div>
         <div class="ticket-body">
           <div class="tk-row"><div class="lab">Для</div><div class="val">Сладкой булочки 🥐</div></div>
-          <div class="tk-row"><div class="lab">Когда</div><div class="val"><span id="tkDate"></span>, <span id="tkTime"></span></div></div>
-          <div class="tk-row"><div class="lab">Кухня</div><div class="val"><span id="tkCuisine"></span><br><small style="color:var(--ink-soft);font-weight:600">ресторан подберёт он 😉</small></div></div>
+          <div class="tk-row"><div class="lab">Кухня</div><div class="val"><span id="tkCuisine"></span><br><small>ресторан подберёт он 😉</small></div></div>
           <div class="tk-row"><div class="lab">Поработаем над</div><div class="val"><ul id="tkProblems"></ul></div></div>
-          <div class="tk-row"><div class="lab">Связь</div><div class="val"><span class="zoom-badge"><span class="zoom-dot"></span>Claude и он будут онлайн в Zoom</span></div></div>
+          <div class="tk-row"><div class="lab">Когда</div><div class="val">суббота или воскресенье, 13:00–19:00 МСК<br><small>точное время ты выбрала в Cal.com 💌</small></div></div>
+          <div class="tk-row"><div class="lab">Связь</div><div class="val"><span class="zoom-badge"><span class="zoom-dot"></span>Zoom придёт в подтверждении на почту</span></div></div>
         </div>
       </div>
       <p class="ps">P.S. Бери только хорошее настроение.<br>Всё остальное — на мне. 💛</p>
@@ -285,8 +279,8 @@
 
 <script>
 /* ---------- state ---------- */
-const state = { step:'intro', problems:new Set(), cuisine:null, date:null, time:null };
-const order = ['intro','question','problems','cuisine','time','done'];
+const state = { step:'intro', problems:new Set(), cuisine:null };
+const order = ['intro','question','problems','cuisine','booking','done'];
 
 /* ---------- data ---------- */
 const PROBLEMS = [
@@ -302,12 +296,9 @@ const CUISINES = [
   {key:'fr',  emoji:'🥐', name:'Французская',  hint:'нежная — как ты 🥰'},
   {key:'sea', emoji:'🦞', name:'Морепродукты', hint:'устрицы, креветки, лобстер'},
 ];
-const SLOTS = ['12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
-const MONTHS  = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const MONTHS_G= ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-const WD = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 
 /* ---------- navigation ---------- */
+let celebrated=false, calInited=false;
 function goto(step){
   state.step = step;
   document.querySelectorAll('.step').forEach(s=>{
@@ -317,8 +308,8 @@ function goto(step){
   });
   updateProgress();
   window.scrollTo({top:0,behavior:'smooth'});
-  if(step==='time') renderCalendar();
-  if(step==='done'){ renderTicket(); celebrate(); }
+  if(step==='booking') initCalInline();
+  if(step==='done'){ renderTicket(); if(!celebrated){ celebrated=true; celebrate(); } }
 }
 function updateProgress(){
   const idx = order.indexOf(state.step);
@@ -328,6 +319,26 @@ function updateProgress(){
     d.classList.toggle('current', idx===s);
   });
 }
+
+/* ---------- Cal.com inline embed (lazy) ---------- */
+function initCalInline(){
+  if(calInited || typeof window.Cal !== 'function') return;
+  calInited=true;
+  Cal("inline", { elementOrSelector:"#cal-inline", calLink:"grigoriy-ottens/vstrecha", config:{ layout:"month_view", theme:"light" } });
+  // Cal дорисовывает iframe ПОСЛЕ заглушки — убираем её, когда виджет загрузился
+  let tries=0; const t=setInterval(function(){
+    const f=document.querySelector('#cal-inline iframe');
+    if(f){
+      clearInterval(t);
+      const drop=function(){ const ph=document.querySelector('#cal-inline .cal-loading'); if(ph&&ph.parentNode) ph.remove(); };
+      f.addEventListener('load', drop);
+      setTimeout(drop, 1500);
+    }
+    if(++tries>40) clearInterval(t);
+  },120);
+}
+/* when the guest finishes booking inside the widget -> show our ticket */
+window.onCalBooked = function(){ if(state.step!=='done') goto('done'); };
 
 /* ---------- runaway "No" — убегает от курсора ---------- */
 const noTexts = ['Нет','Точно нет?','Уверена? 🥺','Ну пожалуйста…','Подумай ещё разок','Я расстроюсь 😢',
@@ -364,14 +375,12 @@ function fleeFrom(cx,cy){
   registerEscape();
   cooling=true; setTimeout(function(){cooling=false;},70);
 }
-/* десктоп: убегает, как только курсор подбирается близко */
 window.addEventListener('mousemove',function(e){
   if(state.step!=='question') return;
   const r=noBtn.getBoundingClientRect();
   const d=Math.hypot(r.left+r.width/2-e.clientX, r.top+r.height/2-e.clientY);
   if(d<120) fleeFrom(e.clientX,e.clientY);
 });
-/* тач / запасной вариант: прыгает при наведении или тапе */
 noBtn.addEventListener('mouseenter',function(e){ fleeFrom(e.clientX,e.clientY); });
 noBtn.addEventListener('click',function(e){ e.preventDefault(); fleeFrom(e.clientX,e.clientY); });
 noBtn.addEventListener('touchstart',function(e){ e.preventDefault(); const t=e.touches[0]; fleeFrom(t.clientX,t.clientY); },{passive:false});
@@ -411,43 +420,6 @@ function renderCuisines(){
   });
 }
 
-/* ---------- calendar ---------- */
-const today=new Date(); today.setHours(0,0,0,0);
-let calY=today.getFullYear(), calM=today.getMonth();
-const maxDate=new Date(today.getFullYear(),today.getMonth()+3,1);
-function sameDay(a,b){return a&&b&&a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
-function renderCalendar(){
-  document.getElementById('calLabel').textContent=MONTHS[calM]+' '+calY;
-  const grid=document.getElementById('calGrid'); grid.innerHTML='';
-  WD.forEach(d=>{const e=document.createElement('div');e.className='wd';e.textContent=d;grid.appendChild(e);});
-  const first=new Date(calY,calM,1);
-  const offset=(first.getDay()+6)%7;
-  const days=new Date(calY,calM+1,0).getDate();
-  for(let i=0;i<offset;i++){const e=document.createElement('div');e.className='day empty';grid.appendChild(e);}
-  for(let d=1;d<=days;d++){
-    const date=new Date(calY,calM,d);
-    const dow=date.getDay(), weekend=(dow===0||dow===6);
-    const b=document.createElement('button'); b.className='day'; b.textContent=d;
-    if(date<today || !weekend){ b.disabled=true; }
-    else b.onclick=()=>{ state.date=date; renderCalendar(); updateConfirm(); };
-    if(sameDay(date,state.date)) b.classList.add('sel');
-    grid.appendChild(b);
-  }
-  document.getElementById('prevMonth').disabled=(calY===today.getFullYear()&&calM===today.getMonth());
-  document.getElementById('nextMonth').disabled=(new Date(calY,calM,1)>=maxDate);
-}
-document.getElementById('prevMonth').onclick=()=>{ if(--calM<0){calM=11;calY--;} renderCalendar(); };
-document.getElementById('nextMonth').onclick=()=>{ if(++calM>11){calM=0;calY++;} renderCalendar(); };
-function renderSlots(){
-  const s=document.getElementById('slots'); s.innerHTML='';
-  SLOTS.forEach(t=>{
-    const b=document.createElement('button'); b.className='slot'; b.textContent=t;
-    b.onclick=()=>{ state.time=t; s.querySelectorAll('.slot').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); updateConfirm(); };
-    s.appendChild(b);
-  });
-}
-function updateConfirm(){ document.getElementById('timeConfirm').disabled = !(state.date && state.time); }
-
 /* ---------- ticket ---------- */
 function problemLabel(k){
   if(k==='other'){ const t=otherText.value.trim(); return '🧩 '+(t||'Другое про Claude и сценарии'); }
@@ -455,9 +427,6 @@ function problemLabel(k){
 }
 function cuisineLabel(k){ const c=CUISINES.find(x=>x.key===k); return c?c.emoji+' '+c.name+' кухня':'—'; }
 function renderTicket(){
-  const d=state.date;
-  document.getElementById('tkDate').textContent = d ? d.getDate()+' '+MONTHS_G[d.getMonth()]+' '+d.getFullYear() : '—';
-  document.getElementById('tkTime').textContent = state.time||'—';
   document.getElementById('tkCuisine').textContent = cuisineLabel(state.cuisine);
   const ul=document.getElementById('tkProblems'); ul.innerHTML='';
   const list=[...state.problems];
@@ -467,27 +436,25 @@ function renderTicket(){
 
 /* ---------- send to him ---------- */
 document.getElementById('sendBtn').onclick=()=>{
-  const d=state.date;
-  const dateStr = d ? d.getDate()+' '+MONTHS_G[d.getMonth()]+' '+d.getFullYear() : '—';
   const probs=[...state.problems].map(problemLabel);
   const body=[
     'Я согласна на романтический воркшоп-ужин 💕','',
-    'Когда: '+dateStr+', '+(state.time||'—'),
     'Кухня: '+cuisineLabel(state.cuisine),
     'Хочу разобраться с:', ...(probs.length?probs.map(p=>' • '+p):[' • разберёмся на месте 😊']),
-    '', 'Жду Zoom 🟢'
+    '', 'Время выбрала в Cal.com (Сб/Вс, 13:00–19:00 МСК) ✅',
+    'Zoom придёт в подтверждении 🟢'
   ].join('\n');
   location.href='mailto:grigoriyottens@gmail.com?subject='+encodeURIComponent('Я согласна на воркшоп-ужин 💕')+'&body='+encodeURIComponent(body);
 };
 
 /* ---------- reset ---------- */
 function resetAll(){
-  state.problems.clear(); state.cuisine=null; state.date=null; state.time=null;
-  escapes=0; noFixed=false; cooling=false;
+  state.problems.clear(); state.cuisine=null;
+  escapes=0; noFixed=false; cooling=false; celebrated=false;
   noBtn.style.position=''; noBtn.style.left=''; noBtn.style.top=''; noBtn.style.margin=''; noBtn.style.zIndex='';
   noBtn.textContent='Нет'; yesBtn.style.transform=''; noHint.textContent='';
-  renderProblems(); renderCuisines(); renderSlots(); otherText.value=''; otherText.classList.add('hidden');
-  document.getElementById('cuisineNext').disabled=true; document.getElementById('timeConfirm').disabled=true;
+  renderProblems(); renderCuisines(); otherText.value=''; otherText.classList.add('hidden');
+  document.getElementById('cuisineNext').disabled=true;
   goto('intro');
 }
 
@@ -517,7 +484,7 @@ function celebrate(){
 }
 
 /* ---------- init ---------- */
-renderProblems(); renderCuisines(); renderSlots(); updateProgress();
+renderProblems(); renderCuisines(); updateProgress();
 </script>
 </body>
 </html>
