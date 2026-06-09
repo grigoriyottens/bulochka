@@ -89,7 +89,7 @@ Cal("on", { action: "bookingSuccessful", callback: function(){ if (window.onCalB
   .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 18px 32px -12px rgba(255,90,122,.95)}
   .btn-primary:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.25);box-shadow:none}
   .btn-ghost{background:#fff;color:var(--ink-soft);border:2px solid var(--line)}
-  #noBtn{transition:left .14s ease, top .14s ease, transform .2s ease}
+  #noBtn{transition:left .14s ease, top .14s ease, transform .2s ease; pointer-events:none}
   .big{font-size:20px;padding:18px 44px}
   .center-btn{display:block;margin:0 auto}
   .row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:24px}
@@ -270,8 +270,8 @@ Cal("on", { action: "bookingSuccessful", callback: function(){ if (window.onCalB
         </div>
       </div>
       <p class="ps">P.S. Бери только хорошее настроение.<br>Всё остальное — на мне. 💛</p>
+      <p class="ps" style="font-size:19px;color:var(--ink-soft)">Твои ответы уже прикреплены к брони — он всё увидит 💌</p>
       <div class="done-actions">
-        <button class="btn btn-primary" id="sendBtn">Отправить ему ответ 💌</button>
         <button class="btn btn-ghost" onclick="resetAll()">Заполнить заново</button>
       </div>
     </section>
@@ -298,7 +298,7 @@ const CUISINES = [
 ];
 
 /* ---------- navigation ---------- */
-let celebrated=false, calInited=false;
+let celebrated=false, calInited=false, calSig=null;
 function goto(step){
   state.step = step;
   document.querySelectorAll('.step').forEach(s=>{
@@ -306,6 +306,7 @@ function goto(step){
     s.classList.toggle('active', on);
     if(on){ s.classList.remove('anim'); void s.offsetWidth; s.classList.add('anim'); }
   });
+  noBtn.style.display = (step==='question' ? '' : 'none');   // «Нет» переезжает в <body>, прячем её вне шага-вопроса
   updateProgress();
   window.scrollTo({top:0,behavior:'smooth'});
   if(step==='booking') initCalInline();
@@ -321,18 +322,30 @@ function updateProgress(){
 }
 
 /* ---------- Cal.com inline embed (lazy) ---------- */
+function bookingNotes(){
+  const probs=[...state.problems].map(problemLabel);
+  const lines=['🥐 Ответы со страницы-приглашения:', 'Кухня: '+cuisineLabel(state.cuisine), 'Поработать над:'];
+  if(probs.length) probs.forEach(p=>lines.push('• '+p)); else lines.push('• разберёмся на месте 😊');
+  return lines.join('\n');
+}
 function initCalInline(){
-  if(calInited || typeof window.Cal !== 'function') return;
-  calInited=true;
-  Cal("inline", { elementOrSelector:"#cal-inline", calLink:"grigoriy-ottens/vstrecha", config:{ layout:"month_view", theme:"light" } });
-  // Cal дорисовывает iframe ПОСЛЕ заглушки — убираем её, когда виджет загрузился
+  if(typeof window.Cal !== 'function') return;
+  const sig=JSON.stringify([...state.problems].sort())+'|'+state.cuisine+'|'+(otherText?otherText.value.trim():'');
+  if(calInited && sig===calSig) return;                  // уже отрисован с этими ответами
+  calSig=sig; calInited=true;
+  // пересоздаём контейнер, чтобы прокинуть свежие ответы (кухня + проблемы) в заметку брони
+  const oldHost=document.getElementById('cal-inline');
+  const host=oldHost.cloneNode(false);
+  host.innerHTML='<div class="cal-loading">загружаю календарь… 🥐</div>';
+  oldHost.parentNode.replaceChild(host, oldHost);
+  Cal("inline", { elementOrSelector:"#cal-inline", calLink:"grigoriy-ottens/vstrecha",
+    config:{ layout:"month_view", theme:"light", notes: bookingNotes() } });
+  // убираем заглушку, когда виджет загрузился
   let tries=0; const t=setInterval(function(){
     const f=document.querySelector('#cal-inline iframe');
-    if(f){
-      clearInterval(t);
+    if(f){ clearInterval(t);
       const drop=function(){ const ph=document.querySelector('#cal-inline .cal-loading'); if(ph&&ph.parentNode) ph.remove(); };
-      f.addEventListener('load', drop);
-      setTimeout(drop, 1500);
+      f.addEventListener('load', drop); setTimeout(drop, 1500);
     }
     if(++tries>40) clearInterval(t);
   },120);
@@ -340,50 +353,56 @@ function initCalInline(){
 /* when the guest finishes booking inside the widget -> show our ticket */
 window.onCalBooked = function(){ if(state.step!=='done') goto('done'); };
 
-/* ---------- runaway "No" — убегает от курсора ---------- */
+/* ---------- runaway "No" — всегда на экране и никогда не кликается ---------- */
 const noTexts = ['Нет','Точно нет?','Уверена? 🥺','Ну пожалуйста…','Подумай ещё разок','Я расстроюсь 😢',
   'Булочка, ну…','Последний шанс 😅','Всё равно будет «Да» 💕'];
 let escapes=0, noFixed=false, cooling=false;
 const noBtn=document.getElementById('noBtn'), yesBtn=document.getElementById('yesBtn'), noHint=document.getElementById('noHint');
+
+function vpSize(){ const v=window.visualViewport; return v ? {w:v.width,h:v.height} : {w:innerWidth,h:innerHeight}; }
 function ensureFixed(){
   if(noFixed) return;
   const r=noBtn.getBoundingClientRect();
+  document.body.appendChild(noBtn);   // выносим из .card: её backdrop-filter делает .card containing block для position:fixed
   noBtn.style.position='fixed'; noBtn.style.margin='0'; noBtn.style.zIndex='50';
   noBtn.style.left=r.left+'px'; noBtn.style.top=r.top+'px';
   noFixed=true;
 }
+function placeAt(left,top){               // держим кнопку в пределах видимого экрана (в т.ч. на мобиле)
+  const r=noBtn.getBoundingClientRect(), pad=10, vp=vpSize();
+  const maxX=Math.max(pad, vp.w-r.width-pad), maxY=Math.max(pad, vp.h-r.height-pad);
+  noBtn.style.left=Math.min(Math.max(pad,left),maxX)+'px';
+  noBtn.style.top=Math.min(Math.max(pad,top),maxY)+'px';
+}
+function clampIntoView(){ if(noFixed) placeAt(parseFloat(noBtn.style.left)||0, parseFloat(noBtn.style.top)||0); }
 function registerEscape(){
   escapes++;
   noBtn.textContent=noTexts[Math.min(Math.floor(escapes/3),noTexts.length-1)];
   yesBtn.style.transform='scale('+Math.min(1+escapes*0.02,1.45)+')';
   if(escapes>=4) noHint.textContent='(спойлер: кнопка «нет» сегодня не ловится 😄)';
 }
-function fleeFrom(cx,cy){
+function dodgeFrom(cx,cy){
   if(cooling) return;
   ensureFixed();
-  const r=noBtn.getBoundingClientRect(), pad=12, w=r.width, h=r.height;
+  const r=noBtn.getBoundingClientRect(), w=r.width, h=r.height, vp=vpSize(), pad=10;
   const bx=r.left+w/2, by=r.top+h/2;
   let dx=bx-cx, dy=by-cy, dist=Math.hypot(dx,dy);
   if(dist<1){ dx=Math.random()-0.5; dy=Math.random()-0.5; dist=Math.hypot(dx,dy)||1; }
   let left=bx+(dx/dist)*170-w/2, top=by+(dy/dist)*170-h/2;
-  if(left<pad||left>innerWidth-w-pad||top<pad||top>innerHeight-h-pad){
-    left=pad+Math.random()*(innerWidth-w-pad*2);
-    top=pad+Math.random()*(innerHeight-h-pad*2);
+  if(left<pad||left>vp.w-w-pad||top<pad||top>vp.h-h-pad){   // у края — прыгаем в случайную точку экрана
+    left=pad+Math.random()*Math.max(0,vp.w-w-pad*2);
+    top=pad+Math.random()*Math.max(0,vp.h-h-pad*2);
   }
-  noBtn.style.left=Math.min(Math.max(pad,left),innerWidth-w-pad)+'px';
-  noBtn.style.top=Math.min(Math.max(pad,top),innerHeight-h-pad)+'px';
-  registerEscape();
+  placeAt(left,top); registerEscape();
   cooling=true; setTimeout(function(){cooling=false;},70);
 }
-window.addEventListener('mousemove',function(e){
-  if(state.step!=='question') return;
-  const r=noBtn.getBoundingClientRect();
-  const d=Math.hypot(r.left+r.width/2-e.clientX, r.top+r.height/2-e.clientY);
-  if(d<120) fleeFrom(e.clientX,e.clientY);
-});
-noBtn.addEventListener('mouseenter',function(e){ fleeFrom(e.clientX,e.clientY); });
-noBtn.addEventListener('click',function(e){ e.preventDefault(); fleeFrom(e.clientX,e.clientY); });
-noBtn.addEventListener('touchstart',function(e){ e.preventDefault(); const t=e.touches[0]; fleeFrom(t.clientX,t.clientY); },{passive:false});
+function nearNo(x,y,thr){ const r=noBtn.getBoundingClientRect(); return Math.hypot(r.left+r.width/2-x, r.top+r.height/2-y) < thr; }
+
+/* кнопка некликабельна (pointer-events:none) — двигаем её событиями окна: одинаково на десктопе и мобиле */
+window.addEventListener('pointermove',function(e){ if(state.step==='question' && nearNo(e.clientX,e.clientY,120)) dodgeFrom(e.clientX,e.clientY); });
+window.addEventListener('pointerdown',function(e){ if(state.step==='question' && nearNo(e.clientX,e.clientY,130)) dodgeFrom(e.clientX,e.clientY); });
+['resize','orientationchange','scroll'].forEach(function(ev){ window.addEventListener(ev, clampIntoView, {passive:true}); });
+if(window.visualViewport){ window.visualViewport.addEventListener('resize', clampIntoView); window.visualViewport.addEventListener('scroll', clampIntoView); }
 yesBtn.addEventListener('click',function(){ goto('problems'); });
 
 /* ---------- problems ---------- */
@@ -434,24 +453,12 @@ function renderTicket(){
   else list.forEach(k=>{ const li=document.createElement('li'); li.textContent=problemLabel(k); ul.appendChild(li); });
 }
 
-/* ---------- send to him ---------- */
-document.getElementById('sendBtn').onclick=()=>{
-  const probs=[...state.problems].map(problemLabel);
-  const body=[
-    'Я согласна на романтический воркшоп-ужин 💕','',
-    'Кухня: '+cuisineLabel(state.cuisine),
-    'Хочу разобраться с:', ...(probs.length?probs.map(p=>' • '+p):[' • разберёмся на месте 😊']),
-    '', 'Время выбрала в Cal.com (Сб/Вс, 13:00–19:00 МСК) ✅',
-    'Zoom придёт в подтверждении 🟢'
-  ].join('\n');
-  location.href='mailto:grigoriyottens@gmail.com?subject='+encodeURIComponent('Я согласна на воркшоп-ужин 💕')+'&body='+encodeURIComponent(body);
-};
-
 /* ---------- reset ---------- */
 function resetAll(){
   state.problems.clear(); state.cuisine=null;
   escapes=0; noFixed=false; cooling=false; celebrated=false;
-  noBtn.style.position=''; noBtn.style.left=''; noBtn.style.top=''; noBtn.style.margin=''; noBtn.style.zIndex='';
+  const yesno=document.querySelector('.yesno'); if(yesno && noBtn.parentNode!==yesno) yesno.appendChild(noBtn);  // вернуть «Нет» на место
+  noBtn.style.position=''; noBtn.style.left=''; noBtn.style.top=''; noBtn.style.margin=''; noBtn.style.zIndex=''; noBtn.style.display='';
   noBtn.textContent='Нет'; yesBtn.style.transform=''; noHint.textContent='';
   renderProblems(); renderCuisines(); otherText.value=''; otherText.classList.add('hidden');
   document.getElementById('cuisineNext').disabled=true;
